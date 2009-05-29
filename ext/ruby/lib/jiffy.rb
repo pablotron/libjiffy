@@ -67,22 +67,27 @@ module Jiffy
       end
     end
 
+    # def self.debug(type, val)
+    #   name = Jiffy.constants.find { |k| Jiffy.const_get(k) == type }
+    #   $stderr.puts "type = #{name}, val = #{val}"
+    # end
+
     def self.decode(str)
       keys = []
-      node = Node.new
+      node = nil
       
       push_node = proc do
         if node.parent
-          case node.parent.class
+          case node.parent.value
           when Array
-            node.parent << node.value
+            node.parent.value << node.value
             node = node.parent
           when Hash
             if keys.last
-              node.parent[keys.last] = node.value
-              keys.last = nil
+              node.parent.value[keys.last] = node.value
+              keys[-1] = nil
             elsif node.value.class == String
-              keys.last = node.value
+              keys[-1] = node.value
             else
               # XXX: shouldn't ever happen
               raise Error, "trying to use non-string value as key (bug?)"
@@ -91,13 +96,18 @@ module Jiffy
             node = node.parent
           else
             # XXX: shouldn't ever happen
-            raise Error, "invalid node in stack (not array or hash, bug?)"
+
+            # get parent class name
+            name = node.parent.value.class.name
+            raise Error, "invalid parent: #{name} (not array or hash, bug?)"
           end
         end
       end
 
       Parser.new do |p|
         p.parse(str) do |type, val|
+          # debug(type, val)
+
           case type
           when TYPE_BGN_STRING
             node = Node.new(node)
@@ -109,7 +119,7 @@ module Jiffy
           when TYPE_INTEGER
             node = Node.new(node, Integer(val))
             push_node.call
-          when TYPE_INTEGER
+          when TYPE_FLOAT
             node = Node.new(node, Float(val))
             push_node.call
           when TYPE_TRUE
