@@ -30,8 +30,8 @@ on top of a stream parser is fairly straightforward; see the methods
 `Jiffy.encode` and `Jiffy.decode` in `ext/ruby/lib/jiffy.rb` for an
 example.
 
-Jiffy is licensed under the MIT license; please see the file COPYING for
-licensing information.
+Jiffy is distributed under the terms of the MIT/X11 license; please see
+the "License" section below or the file COPYING for the license terms.
 
 Compiling Jiffy
 ===============
