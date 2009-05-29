@@ -41,9 +41,9 @@ Steps to build Jiffy:
   2. Type `make` to compile Jiffy.
   3. Type `make install` to install Jiffy.
 
-You can also link Jiffy statically into your program using the
-file `src/libjiffy.a`, or by copying `src/jiffy.c` to your source files
-and the `include/jiffy/` directory to your include directory.
+You can also statically link Jiffy into your program against the file
+`src/libjiffy.a`, or by copying `src/jiffy.c` to your source files and
+the `include/jiffy/` directory to your include directory.
 
 Using Jiffy
 ===========
