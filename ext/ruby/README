@@ -1,16 +1,29 @@
 Jiffy-Ruby 0.1.0 README
 =======================
 
-A simple Ruby binding for Jiffy.
+Table of Contents
+=================
 
+  1. Overview
+  2. Compiling Jiffy-Ruby
+  3. Using Jiffy-Ruby
+  4. About the Author
+
+Overview
+========
+Simple Ruby bindings for Jiffy.  These bindings also include a
+traditional DOM-style JSON encoder and parser, accessible via
+`Jiffy.encode` and `Jiffy.decode` methods.  See the "Using Jiffy-Ruby"
+section below for additional details.
 
 Compiling Jiffy-Ruby
 ====================
-To build it, do this:
-    # compile binding
-    ruby ./setup.rb setup 
+To build the Jiffy-Ruby bindings, do this:
 
-    # install binding
+    # configure and compile Jiffy-Ruby
+    ruby ./setup.rb config && ruby ./setup.rb setup 
+
+    # install Jiffy-Ruby
     sudo ruby ./setup.rb install
   
 Using Jiffy-Ruby
@@ -21,14 +34,11 @@ A simple example:
     require 'jiffy'
 
     # sample json data
-    JSON_DATA = "[1, 2, 3, 4, 5]"
-
-    # load library
-    p = Jiffy::Parser.new
+    DATA = "[1, 2, 3, 4, 5]"
 
     begin 
       # parse json
-      p.parse(JSON_DATA) do |type, val| 
+      Jiffy.parse(DATA) do |type, val| 
         # determine the type of data
         case type
         when Jiffy::TYPE_INTEGER
@@ -38,19 +48,29 @@ A simple example:
           # ignore other types of data
         end
       end
-
-      # mark parser as done
-      p.done
     rescue Jiffy::Error => err
       # catch any parsing errors
       $stderr.puts "ERROR: #{err}"
     end
 
+You can also create a Parser instance, like this:
+
+    # create parser instance
+    p = Jiffy::Parser.new
+
+    # parse text
+    p.parse(some_text) do |type, val| 
+      # do parsing here
+    end
+
+    # mark parser as done
+    p.done
+
 You can also call the parser with a block (similar to File::open), like
 so:
 
     # several chunks of data
-    data = [
+    DATA = [
       '[',
       '"foo",',
       '99,',
@@ -63,7 +83,7 @@ so:
       # create parser
       Jiffy::Parser.new do |p|
         # iterate over data chunks
-        data.each do |chunk|
+        DATA.each do |chunk|
           # parse chunk
           p.parse(chunk) do |type, val|
             # this is a slightly more elaborate example of the block
@@ -97,6 +117,21 @@ so:
       # catch any parsing errors
       $stderr.puts "ERROR: #{err}"
     end
+
+Jiffy also includes a traditional DOM-style JSON encoder and parser,
+accessible via the `Jiffy.encode` and `Jiffy.decode` methods:
+
+    #
+    # Jiffy.encode example:
+    #
+    >> Jiffy.encode({'apples' => 99, 'oranges' => 12, 'need' => %w{pears}, 'tasty' => false})
+    => "({\"need\":[\"pears\"],\"tasty\":false,\"apples\":99,\"oranges\":12})"
+
+    # 
+    # Jiffy.decode example:
+    # 
+    >> Jiffy.decode('{"key":[true,false,null,99.6]}')
+    => {"key"=>[true, false, nil, 99.6]}
 
 About the Author
 ================
