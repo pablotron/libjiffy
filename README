@@ -1,0 +1,195 @@
+Jiffy 0.1.0 README
+==================
+
+Introduction
+============
+Jiffy is a fast, lightweight, and reentrant JSON stream parser.  Jiffy
+is extremely portable; it is written in pure ANSI C and has no external
+dependencies.  A Jiffy parser uses about 1 kilobyte of memory and never
+allocates any additional memory, which makes it ideal for embedded
+systems or systems that are otherwise memory-constrained.
+
+Compiling Jiffy
+===============
+
+  1. Edit the top-level Makefile.
+  2. Type `make` to compile Jiffy.
+  3. Type `make install` to install Jiffy.
+
+Using Jiffy
+===========
+Using Jiffy is a 4-step process:
+
+  1. Create a parser callback that handles your data (see below). 
+  2. Initialize a parser context using `jf_init()`.
+  3. Pass any amount of JSON data to your parser using `jf_parse()`.
+  4. Finish parsing by calling `jf_done()`.
+
+Here's a simple example of a parser callback that prints any integer
+found in a JSON stream:
+
+    static jf_err_t
+    parse_cb(jf_t *parser, jf_type_t type, const char *val, const size_t len) {
+      char buf[JF_MAX_BUF_LEN];
+
+      /* we only care about integer values */
+      if (type == JF_TYPE_INTEGER) {
+        /* copy and null-terminate value */
+        memcpy(buf, val, len);
+        buf[len] = '\0';
+
+        /* print integer and byte offset */
+        printf("got integer %s at byte %lu\n", buf, p->num_bytes);
+      }
+
+      /* continue parsing */
+      return JF_OK;
+    }
+
+Here's the basic main() file that goes with the `parse_cb()` function
+above:
+
+    int main(int argc, char *argv[]) {
+      char buf[BUFSIZ], err_buf[1024];
+      size_t len;
+      jf_t parser;
+      jf_err_t err;
+
+      /* initialize parser and bind it to the parser callback */
+      jf_init(&parser, (jf_cb_t) parse_cb);
+
+      /* read JSON stream from standard input */
+      while (!feof(stdin) && (len = fread(buf, 1, sizeof(buf), stdin)) > 0) {
+        /* parse input */
+        err = jf_parse(parser, buf, len, 1);
+
+        /* check for parsing error */
+        if (err != JF_OK) {
+          /* print Jiffy error string to err_buf */
+          jf_strerror_r(err, err_buf, sizeof(err_buf));
+
+          /* print message to standard error and exit */
+          fprintf(stderr, "ERROR: %s\n", err_buf);
+          return EXIT_FAILURE;
+        }
+      }
+
+      /* return success */
+      return EXIT_SUCCESS;
+    }
+
+Here's a slightly more complex example which parses an input stream
+containing an array of integers (the source code for this example is
+also available in `tests/parse_int_array.c`):
+
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <unistd.h>
+    #include <string.h>
+    #include <errno.h>
+    
+    #include <jiffy/jiffy.h>
+    
+    #define UNUSED(a) ((void) (a))
+    
+    /* global that stores the capture state */
+    static int capture = 0;
+    
+    static void
+    run(jf_t *p, uint8_t *str, size_t str_len) {
+      jf_err_t err;
+      char buf[1024];
+    
+      if ((err = jf_parse(p, str, str_len)) != JF_OK) {
+        /* 
+         * if we got here, then there was a parsing error, 
+         * so print the error message and exit
+         */
+    
+        /* get human-readable error string */
+        jf_strerror_r(err, buf, sizeof(buf));
+    
+        /* print error */
+        fprintf(stderr, "ERROR: got \"%s\" at byte %lu\n", buf, p->num_bytes);
+    
+        /* exit program */
+        exit(EXIT_FAILURE);
+      }
+    }
+    
+    static jf_err_t
+    parse_cb(jf_t *p, jf_type_t type, const char *val, const size_t val_len) {
+      char buf[JF_MAX_BUF_LEN];
+      UNUSED(p);
+    
+      switch (type) {
+      case JF_TYPE_BGN_ARRAY:
+        if (capture) {
+          /* don't allow nested arrays */
+          fprintf(stderr, "ERROR: nested array\n");
+    
+          /* stop parsing */
+          return JF_STOP;
+        }
+    
+        /* start capturing integers */
+        capture = 1;
+    
+        break;
+      case JF_TYPE_END_ARRAY:
+        /* stop capturing integers */
+        capture = 0;
+    
+        break;
+      case JF_TYPE_INTEGER:
+        if (capture > 0) {
+          /* populate and null-terminate buffer */
+          memcpy(buf, val, val_len);
+          buf[val_len] = '\0';
+    
+          /* print integer */
+          printf("%s\n", buf);
+        } else {
+          /* user entered a bare integer instead of an array */
+          fprintf(stderr, "ERROR: bare integer (must be array of integers)\n");
+    
+          /* stop parsing */
+          return JF_STOP;
+        }
+    
+        break;
+      default:
+        fprintf(stderr, "ERROR: unknown item type: %d\n", type);
+    
+        /* stop parsing */
+        return JF_STOP;
+      }
+    
+      /* continue parsing */
+      return JF_OK;
+    }
+    
+    int main(int argc, char *argv[]) {
+      uint8_t buf[BUFSIZ];
+      size_t len;
+      jf_t p;
+    
+      UNUSED(argc);
+      UNUSED(argv);
+    
+      /* init parser */
+      jf_init(&p, (jf_cb_t) parse_cb);
+      
+      /* read and parse standard input */
+      while (!feof(stdin) && (len = fread(buf, 1, sizeof(buf), stdin)) > 0)
+        run(&p, buf, len);
+    
+      /* finish parsing */
+      run(&p, 0, 0);
+      
+      /* return success */
+      return EXIT_SUCCESS;
+    }
+
+Jiffy also includes a simple binding for the Ruby programming language
+(http://ruby-lang.org/).  It isn't compiled by default, 
