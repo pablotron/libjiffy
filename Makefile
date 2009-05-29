@@ -1,11 +1,15 @@
 LIB=jiffy
 JIFFY_VERSION=0.1.0
+PREFIX=/usr/local
 
 all:
 	(cd src && make all JIFFY_VERSION=$(JIFFY_VERSION))
 
 release: all $(LIB).1
 	(cd src && make release JIFFY_VERSION=$(JIFFY_VERSION))
+
+install: all
+	(cd src && make install PREFIX=$(PREFIX) JIFFY_VERSION=$(JIFFY_VERSION))
 
 clean:
 	(cd src && make clean)

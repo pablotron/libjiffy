@@ -10,6 +10,10 @@ OBJS=$(shell ls *.c | sed 's/\.c/.o/')
 
 all: $(LIB) $(AR_LIB)
 
+install: all
+	install -D ../include/jiffy/jiffy.h $(PREFIX)/include/jiffy/jiffy.h
+	install $(LIB) $(AR_LIB) $(PREFIX)/lib
+
 release: all
 
 clean:
