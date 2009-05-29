@@ -1,8 +1,6 @@
-
 #include <ruby.h>
 #include <jiffy/jiffy.h>
 
-#define VERSION "0.1.0"
 #define UNUSED(x) ((void) (x))
 
 static VALUE mJiffy,

@@ -1,0 +1,90 @@
+This is a simple Ruby binding for Jiffy.  To build it, do this:
+
+    # compile binding
+    ruby ./setup.rb setup 
+
+    # install binding
+    sudo ruby ./setup.rb install
+  
+A simple example:
+
+    # load library
+    require 'jiffy'
+
+    # sample json data
+    JSON_DATA = "[1, 2, 3, 4, 5]"
+
+    # load library
+    p = Jiffy::Parser.new
+
+    begin 
+      # parse json
+      p.parse(JSON_DATA) do |type, val| 
+        # determine the type of data
+        case type
+        when Jiffy::TYPE_INTEGER
+          # print integers on the screen
+          puts "got integer: #{val}"
+        else
+          # ignore other types of data
+        end
+      end
+
+      # mark parser as done
+      p.done
+    rescue Jiffy::Error => err
+      # catch any parsing errors
+      $stderr.puts "ERROR: #{err}"
+    end
+
+You can also call the parser with a block (similar to File::open), like
+so:
+
+    # several chunks of data
+    data = [
+      '[',
+      '"foo",',
+      '99,',
+      'true,',
+      'null',
+      ']',
+    ]
+
+    begin 
+      # create parser
+      Jiffy::Parser.new do |p|
+        # iterate over data chunks
+        data.each do |chunk|
+          # parse chunk
+          p.parse(chunk) do |type, val|
+            # this is a slightly more elaborate example of the block
+            # above.  basically we're handling several more types,
+            # including string fragments
+            case type
+            when Jiffy::TYPE_INTEGER
+              puts "got integer: #{val}"
+            when Jiffy::TYPE_FLOAT
+              puts "got float: #{val}"
+            when Jiffy::TYPE_BGN_STRING
+              puts "begin string"
+            when Jiffy::TYPE_END_STRING
+              puts "end string"
+            when Jiffy::TYPE_STRING_FRAGMENT
+              puts "got string fragment: #{val}"
+            when Jiffy::TYPE_TRUE
+              puts "got true"
+            when Jiffy::TYPE_FALSE
+              puts "got false"
+            when Jiffy::TYPE_NULL
+              puts "got null"
+            end
+          end
+        end
+
+        # note: we don't need to call done here, because
+        # Jiffy automatically does it at the end of the block
+      end
+    rescue Jiffy::Error => err
+      # catch any parsing errors
+      $stderr.puts "ERROR: #{err}"
+    end
