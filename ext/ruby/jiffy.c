@@ -2,7 +2,7 @@
 #include <ruby.h>
 #include <jiffy/jiffy.h>
 
-#define VERSION "0.2.0"
+#define VERSION "0.1.0"
 #define UNUSED(x) ((void) (x))
 
 static VALUE mJiffy,
@@ -53,31 +53,6 @@ jfr_parse_cb(jf_t *p, jf_type_t type, uint8_t *jf_buf, size_t jf_buf_len) {
   return JF_OK;
 }
 
-static VALUE 
-jfr_parser_init(int argc, VALUE *argv, VALUE self)
-{
-  jf_t *parser;
-
-  Data_Get_Struct(self, jf_t, parser);
-  jf_init(parser, (jf_cb_t) jfr_parse_cb);
-
-  if (rb_block_given_p())
-    parser->user_data = (void*) rb_block_proc();
-
-  switch (argc) {
-  case 0:
-    /* do nothing */
-    break;
-  case 1:
-    /* FIXME: add support for flags */
-    break;
-  default:
-    rb_raise(rb_eArgError, "invalid argument count (not 0 or 1)");
-  }
-  
-  return self;
-}
-
 static VALUE
 jfr_parser_parse(VALUE self, VALUE str) {
   jf_err_t err;
@@ -90,9 +65,9 @@ jfr_parser_parse(VALUE self, VALUE str) {
     parser->user_data = (void*) rb_block_proc();
 
   if (str != Qnil)
-    err = jf_parse(parser, RSTRING(str)->ptr, RSTRING(str)->len, 1);
+    err = jf_parse(parser, RSTRING(str)->ptr, RSTRING(str)->len);
   else
-    err = jf_parse(parser, 0, 0, 0);
+    err = jf_parse(parser, 0, 0);
 
   if (err != JF_OK) {
     jf_strerror_r(err, err_buf, sizeof(err_buf));
@@ -102,8 +77,32 @@ jfr_parser_parse(VALUE self, VALUE str) {
   return INT2FIX(parser->num_bytes);
 }
 
+static VALUE 
+jfr_parser_init(int argc, VALUE *argv, VALUE self)
+{
+  jf_t *parser;
+
+  Data_Get_Struct(self, jf_t, parser);
+  jf_init(parser, (jf_cb_t) jfr_parse_cb);
+
+  if (rb_block_given_p()) {
+    /* call parse proc */
+    rb_yield(self);
+    jfr_parser_parse(self, Qnil);
+  }
+
+  return self;
+}
+
 static VALUE
 jfr_parser_num_bytes(VALUE self) {
+  jf_t *parser;
+  Data_Get_Struct(self, jf_t, parser);
+  return INT2FIX(parser->num_bytes);
+}
+
+static VALUE
+jfr_parser_done(VALUE self) {
   jf_t *parser;
   Data_Get_Struct(self, jf_t, parser);
   return INT2FIX(parser->num_bytes);
