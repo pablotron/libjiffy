@@ -32,7 +32,9 @@ module Jiffy
         } + '"'
       when Numeric
         val.to_s
-      when Boolean
+      when true
+        val.to_s
+      when false
         val.to_s
       when nil
         'null'
