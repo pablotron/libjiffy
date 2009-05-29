@@ -65,7 +65,7 @@ above:
       /* read JSON stream from standard input */
       while (!feof(stdin) && (len = fread(buf, 1, sizeof(buf), stdin)) > 0) {
         /* parse input */
-        err = jf_parse(parser, buf, len, 1);
+        err = jf_parse(&parser, buf, len);
 
         /* check for parsing error */
         if (err != JF_OK) {
@@ -78,13 +78,166 @@ above:
         }
       }
 
+      /* finish parsing */
+      err = jf_done(&parser);
+
+      /* check for parsing error */
+      if (err != JF_OK) {
+        /* print Jiffy error string to err_buf */
+        jf_strerror_r(err, err_buf, sizeof(err_buf));
+
+        /* print message to standard error and exit */
+        fprintf(stderr, "ERROR: %s\n", err_buf);
+        return EXIT_FAILURE;
+      }
+
       /* return success */
       return EXIT_SUCCESS;
     }
 
-Here's a slightly more complex example which parses an input stream
-containing an array of integers can be found in the file
-`tests/parse_int_array.c`.
+Normally it's better to wrap the error handling in a separate function.
+Here's the same main function, with error handling moved to a separate
+function:
+
+    /*
+     * parse_and_check - this function calls jf_parse() and handles
+     * any errors.
+     */
+    static void
+    parse_and_check(jf_t *parser, uint8_t *buf, size_t buf_len) {
+      char err_buf[1024];
+      jf_err_t err;
+
+      if ((err = jf_parse(parser, buf, buf_len)) != JF_OK) {
+        /* print Jiffy error string to err_buf */
+        jf_strerror_r(err, err_buf, sizeof(err_buf));
+
+        /* print message to standard error and exit */
+        fprintf(stderr, "ERROR: %s\n", err_buf);
+        exit(EXIT_FAILURE);
+      }
+    }
+
+    int main(int argc, char *argv[]) {
+      char buf[BUFSIZ];
+      size_t len;
+      jf_t parser;
+
+      /* initialize parser and bind it to the parser callback */
+      jf_init(&parser, (jf_cb_t) parse_cb);
+
+      /* parse JSON stream from standard input */
+      while (!feof(stdin) && (len = fread(buf, 1, sizeof(buf), stdin)) > 0)
+        parse_and_check(&parser, buf, len);
+
+      /* finish parsing 
+       *
+       * (calling jf_parse() with a NULL buffer and zero length is
+       * equivalent to calling jf_done())
+       */
+      parse(&parser, 0, 0);
+
+      /* return success */
+      return EXIT_SUCCESS;
+    }
+
+A slightly more complex example which parses an input stream containing
+an array of integers can be found in the file `tests/parse_int_array.c`.
+
+You can also pass data to the parser callback functions using the
+`user_data` member of the parser context, like so:
+
+    /*
+     * sample data structure to be saved in parser context
+     */
+    typedef struct {
+      int num_apples, 
+          num_bananas;
+    } fruit_basket_t;
+
+    static jf_err_t
+    parse_cb(jf_t *parser, jf_type_t type, uint8_t *buf, size_t buf_len) {
+      /* extract basket structure from parser object */
+      fruit_basket_t *basket = (fruit_basket_t*) parser->user_data;
+
+      /* ... do parsing and stuff here */
+
+      return JF_OK;
+    }
+
+    int main(int argc, char *argv[]) {
+      char buf[BUFSIZ];
+      size_t len;
+      jf_t parser;
+      fruit_basket_t basket;
+
+      /* put two apples and one banana in fruit basket */
+      basket.num_apples  = 2;
+      basket.num_bananas = 1;
+      
+      /* initialize parser */
+      jf_init(&parser, parse_cb);
+
+      /* save pointer to fruit basket in parser structure */
+      parser.user_data = (void*) &basket;
+
+      /* read JSON stream from standard input */
+      while (!feof(stdin) && (len = fread(buf, 1, sizeof(buf), stdin)) > 0) {
+        if ((err = jf_parse(&parser, buf, len)) != JF_OK) {
+          /* ... handle error */
+        }
+      }
+
+      if ((err = jf_done(&parser)) != JF_OK) {
+        /* ... handle error */
+      }
+
+      /* return success */
+      return EXIT_SUCCESS;
+    }
+
+Note that the `user_data` parameter is ignored by Jiffy; you can change
+it at any time (including during the parsing callback) and you are
+responsible for freeing any resources associated with it.
 
 Jiffy also includes a simple binding for the Ruby programming language
-(http://ruby-lang.org/).  It isn't compiled by default, 
+(http://ruby-lang.org/).  Here's a brief example the Ruby interface:  
+
+    # load library
+    require 'jiffy'
+
+    # sample json data
+    JSON_DATA = "[1, 2, 3, 4, 5]"
+
+    begin 
+      # load library
+      p = Jiffy::Parser.new
+
+      # parse json
+      p.parse(JSON_DATA) do |type, val| 
+        # determine the type of data
+        case type
+        when Jiffy::TYPE_INTEGER
+          # print integers on the screen
+          puts "got integer: #{val}"
+        else
+          # ignore other types of data
+        end
+      end
+
+      # mark parser as done
+      p.done
+    rescue Jiffy::Error => err
+      # catch any parsing errors
+      $stderr.puts "ERROR: #{err}"
+    end
+
+
+Note that the Ruby binding is not compiled by default,  See
+`ext/ruby/README` for installation instructions and additional
+documetation.
+
+About the Author
+================
+Paul Duncan (pabs@pablotron.org)
+http://pablotron.org/

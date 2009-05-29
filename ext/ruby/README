@@ -1,11 +1,20 @@
-This is a simple Ruby binding for Jiffy.  To build it, do this:
+Jiffy-Ruby 0.1.0 README
+=======================
 
+A simple Ruby binding for Jiffy.
+
+
+Compiling Jiffy-Ruby
+====================
+To build it, do this:
     # compile binding
     ruby ./setup.rb setup 
 
     # install binding
     sudo ruby ./setup.rb install
   
+Using Jiffy-Ruby
+================
 A simple example:
 
     # load library
@@ -88,3 +97,8 @@ so:
       # catch any parsing errors
       $stderr.puts "ERROR: #{err}"
     end
+
+About the Author
+================
+Paul Duncan (pabs@pablotron.org)
+http://pablotron.org/
