@@ -1,5 +1,5 @@
 /*
- * libjiffy - Fast, reentrant, pure ANSI C JSON stream parser.
+ * Jiffy - Fast, lighweight, and reentrant JSON stream parser.
  *  
  * Copyright (C) 2009 Paul Duncan <pabs@pablotron.org>
  *  
@@ -12,18 +12,16 @@
  * the following conditions:
  *   
  * The above copyright notice and this permission notice shall be
- * included in all copies of the Software, its documentation and
- * marketing & publicity materials, and acknowledgment shall be given in
- * the documentation, materials and software packages that this Software
- * was used.
+ * included in all copies or substantial portions of the of the
+ * Software.
  *    
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
  * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  
  *  
  */
 
