@@ -4,8 +4,8 @@ module Jiffy
   module DocumentParser
     ESCAPE_RE = /([\b\f\t\n\r\v\\\/])/
 
-    def self.encode(val)
-      case val
+    def self.encode(val, wrap = true)
+      r = case val
       when String
         '"' + val.gsub(ESCAPE_RE) { |c|
           case c
@@ -39,18 +39,24 @@ module Jiffy
       when nil
         'null'
       when Array
-        '[' + val.map { |v| encode(v) }.join(',') + ']'
+        '[' + val.map { |v| encode(v, false) }.join(',') + ']'
       when Hash
         '{' + val.map { |k, v| 
           unless k.is_a?(String)
             raise Error, "non-string key values are not allowed"
           end
 
-          [encode(k), encode(v)].join(':') 
+          [encode(k, false), encode(v, false)].join(':') 
         }.join(',') + '}'
       else
         raise Error, "invalid object type: #{val.class.name}"
       end
+
+      # wrap result in parens
+      r = '(' + r + ')' if wrap
+
+      # return result
+      r
     end
         
     class Node
