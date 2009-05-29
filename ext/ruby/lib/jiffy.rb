@@ -25,8 +25,7 @@
 #  
 
 # load native library
-# FIXME: handle platform-specific extension here
-require 'jiffy.so'
+require 'jiffy_parser'
 
 module Jiffy
   module DocumentParser
