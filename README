@@ -4,10 +4,16 @@ Jiffy 0.1.0 README
 Introduction
 ============
 Jiffy is a fast, lightweight, and reentrant JSON stream parser.  Jiffy
-is extremely portable; it is written in pure ANSI C and has no external
-dependencies.  A Jiffy parser uses about 1 kilobyte of memory and never
-allocates any additional memory, which makes it ideal for embedded
-systems or systems that are otherwise memory-constrained.
+is extremely portable; it is endian-clean, written in pure ANSI C, and
+has no external dependencies.  
+
+A Jiffy parser uses about 1 kilobyte of memory and never allocates any
+additional memory, which makes it ideal for embedded systems or any
+other memory-constrained environment.
+
+Jiffy also includes a binding for the programming language Ruby
+(http://ruby-lang.org/).  See the "Using Jiffy" section below and the
+file `ext/ruby/README` for additional information.
 
 Compiling Jiffy
 ===============
@@ -22,7 +28,7 @@ and the `include/jiffy/` directory to your include directory.
 
 Using Jiffy
 ===========
-Using Jiffy is a 4-step process:
+Creating a Jiffy parser is a simple, 4-step process:
 
   1. Create a parser callback that handles your data (see below). 
   2. Initialize a parser context using `jf_init()`.
@@ -50,7 +56,7 @@ found in a JSON stream:
       return JF_OK;
     }
 
-Here's the basic main() file that goes with the `parse_cb()` function
+Here's the basic main() file that goes with the parser callback function
 above:
 
     int main(int argc, char *argv[]) {
