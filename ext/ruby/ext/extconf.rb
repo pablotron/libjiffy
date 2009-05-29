@@ -2,6 +2,6 @@ require 'mkmf'
 
 if have_library('jiffy', 'jf_init')
   $LDFLAGS << ' -ljiffy'
-  create_makefile("jiffy")
+  create_makefile("jiffy_parser")
 end
 

@@ -133,7 +133,7 @@ jfr_parser_done(VALUE self) {
   return INT2FIX(parser->num_bytes);
 }
 
-void Init_jiffy(void) {
+void Init_jiffy_parser(void) {
   mJiffy = rb_define_module("Jiffy");
 
   rb_define_const(mJiffy, "VERSION", rb_str_new2(jf_version()));
