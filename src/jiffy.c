@@ -122,10 +122,12 @@ jf_init(jf_t *p, jf_cb_t cb) {
   p->cb = cb;
 }
 
+#if 0
 void
 jf_reset(jf_t *p) {
   jf_init(p, p->cb);
 }
+#endif /* 0 */
 
 #define MASK(bits, shift) (((1 << (bits)) - 1) << (shift))
 #define FROM_HEX(c) MASK(4, 0) & (((c) >= '0' && (c) <= '9') ? ((c) - '0') : (((c) - 'a') + 10))

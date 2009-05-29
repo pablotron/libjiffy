@@ -208,12 +208,6 @@ jf_err_t jf_strerror_r(jf_err_t err, char *buf, size_t buf_len);
  */
 void jf_init(jf_t *, jf_cb_t);
 
-/* 
- * jf_reset() - Reset given parser context.
- *
- */
-void jf_reset(jf_t *);
-
 /*
  * jf_parse() - Parse given JSON data with parser.
  *
