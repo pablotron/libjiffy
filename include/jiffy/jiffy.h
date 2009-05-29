@@ -218,9 +218,18 @@ void jf_reset(jf_t *);
 
 /*
  * jf_parse() - Parse given JSON data with parser.
+ *
+ * Note: pasa a NULL buffer and a length of zero to indicate the final
+ * block (or use `jf_done()`).
  */
-jf_err_t jf_parse(jf_t *, const uint8_t *, const size_t, const int);
+jf_err_t jf_parse(jf_t *, const uint8_t *, const size_t);
 
+/*
+ * jf_done() - Mark parser as done.
+ * 
+ * Note: this is equivalent to calling jf_parse(parser, NULL, 0);
+ */
+jf_err_t jf_done(jf_t *);
 
 #ifdef __cplusplus
 };

@@ -346,7 +346,7 @@ decode_utf8(jf_t *p) {
       PUSH_STATE((ps), (d));                        \
                                                     \
     PUSH_STATE((ps), 'n');                          \
-    (ps)->buf_len = 0;                              \
+    (ps)->buf_len = 1;                              \
     (ps)->buf[0] = (buffer)[i];                     \
                                                     \
     break;
@@ -364,7 +364,7 @@ decode_utf8(jf_t *p) {
   
 
 jf_err_t
-jf_parse(jf_t *p, const uint8_t *buf, const size_t buf_len, const int is_final) {
+jf_parse(jf_t *p, const uint8_t *buf, const size_t buf_len) {
   size_t i, base;
   jf_err_t err;
 
@@ -890,7 +890,7 @@ retry:
   p->num_bytes = base + buf_len;
 
   /* if this is the final block, then make sure the stack is sane */
-  if (is_final) {
+  if (!buf && !buf_len) {
     if (p->sp == 1) {
       /* check for final state */
       if (p->stack[0] != ' ')

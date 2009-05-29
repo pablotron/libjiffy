@@ -108,11 +108,11 @@ int main(int argc, char *argv[]) {
   
   /* read input file */
   while (!feof(fh) && (len = fread(buf, 1, sizeof(buf), fh)) > 0)
-    if ((err = jf_parse(&p, buf, len, 1)) != JF_OK)
+    if ((err = jf_parse(&p, buf, len)) != JF_OK)
       print_error_and_die(&p, err);
 
   /* finish parsing */
-  if ((err = jf_parse(&p, 0, 0, 0)) != JF_OK)
+  if ((err = jf_done(&p)) != JF_OK)
     print_error_and_die(&p, err);
   
   /* close input file */
