@@ -10,7 +10,7 @@
 #define UNUSED(a) ((void) (a))
 
 static jf_err_t
-parser_cb(jf_parser_t *p, jf_type_t type, char *buf, size_t len) {
+parse_cb(jf_t *p, jf_type_t type, char *buf, size_t len) {
   UNUSED(p);
   UNUSED(buf);
 
@@ -59,7 +59,7 @@ parser_cb(jf_parser_t *p, jf_type_t type, char *buf, size_t len) {
   return JF_OK;
 }
 
-static void dump_stack(jf_parser_t *p) {
+static void dump_stack(jf_t *p) {
   fprintf(
     stderr, 
     "DEBUG: num_bytes = %lu, sp = %lu, stack = %s\n", 
@@ -72,11 +72,11 @@ int main(int argc, char *argv[]) {
   char err_buf[1024];
   FILE *fh;
   size_t len;
-  jf_parser_t p;
+  jf_t p;
   jf_err_t err;
 
   /* init parser */
-  jf_parser_init(&p, (jf_parser_cb_t) parser_cb);
+  jf_init(&p, (jf_cb_t) parse_cb);
 
   /* handle command-line arguments */
   if (argc < 2 || !strncmp("-", argv[1], 2)) {

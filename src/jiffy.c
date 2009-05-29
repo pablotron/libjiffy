@@ -119,14 +119,14 @@ jf_strerror_r(jf_err_t err, char *buf, size_t buf_len) {
 }
 
 void
-jf_parser_init(jf_parser_t *p, jf_parser_cb_t cb) {
-  memset(p, 0, sizeof(jf_parser_t));
+jf_init(jf_t *p, jf_cb_t cb) {
+  memset(p, 0, sizeof(jf_t));
   p->cb = cb;
 }
 
 void
-jf_parser_reset(jf_parser_t *p) {
-  jf_parser_init(p, p->cb);
+jf_reset(jf_t *p) {
+  jf_init(p, p->cb);
 }
 
 #define MASK(bits, shift) (((1 << (bits)) - 1) << (shift))
@@ -134,7 +134,7 @@ jf_parser_reset(jf_parser_t *p) {
 
 /* FIXME: i don't think this is working right */
 static jf_err_t
-decode_utf8(jf_parser_t *p) {
+decode_utf8(jf_t *p) {
   uint8_t *u = p->buf + p->buf_len - 4;
   uint32_t v;
 
@@ -364,7 +364,7 @@ decode_utf8(jf_parser_t *p) {
   
 
 jf_err_t
-jf_parse(jf_parser_t *p, const uint8_t *buf, const size_t buf_len, const int is_final) {
+jf_parse(jf_t *p, const uint8_t *buf, const size_t buf_len, const int is_final) {
   size_t i, base;
   jf_err_t err;
 

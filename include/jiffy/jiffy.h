@@ -59,7 +59,7 @@ extern "C" {
  */
 #define JF_MAX_BUF_LEN      128
 
-typedef struct jf_parser_t_ jf_parser_t;
+typedef struct jf_t_ jf_t;
 
 /* 
  * jf_err_t - Full list of error codes returned by Jiffy.
@@ -153,19 +153,19 @@ typedef enum {
 #define JF_FLAG_IGNORE_RFC3629 (1 << 0)
 
 /* 
- * jf_parser_cb_t - Parser callback prototype.
+ * jf_cb_t - Parser callback prototype.
  */
-typedef jf_err_t (*jf_parser_cb_t)(jf_parser_t *, jf_type_t, const uint8_t  *, const size_t);
+typedef jf_err_t (*jf_cb_t)(jf_t *, jf_type_t, const uint8_t  *, const size_t);
 
 /* 
- * jf_parser_t - Main parser context.
+ * jf_t - Main parser context.
  */
-struct jf_parser_t_ {
+struct jf_t_ {
   /* user data (public, editable at any point) */
   void *user_data;
 
   /* parser callback (public, editable before first call to jf_parse() */
-  jf_parser_cb_t cb;
+  jf_cb_t cb;
 
   /* parser flags (public, editable before first call to jf_parse()) */
   uint32_t flags;
@@ -205,21 +205,21 @@ const char *jf_version(void);
 jf_err_t jf_strerror_r(jf_err_t err, char *buf, size_t buf_len);
 
 /* 
- * jf_parser_init() - Initialize parser context.
+ * jf_init() - Initialize parser context.
  *
  */
-void jf_parser_init(jf_parser_t *, jf_parser_cb_t);
+void jf_init(jf_t *, jf_cb_t);
 
 /* 
- * jf_parser_reset() - Reset given parser context.
+ * jf_reset() - Reset given parser context.
  *
  */
-void jf_parser_reset(jf_parser_t *);
+void jf_reset(jf_t *);
 
 /*
  * jf_parse() - Parse given JSON data with parser.
  */
-jf_err_t jf_parse(jf_parser_t *, const uint8_t *, const size_t, const int);
+jf_err_t jf_parse(jf_t *, const uint8_t *, const size_t, const int);
 
 
 #ifdef __cplusplus
