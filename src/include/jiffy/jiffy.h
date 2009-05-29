@@ -1,5 +1,5 @@
-#ifndef JSON_H
-#define JSON_H
+#ifndef JIFFY_H
+#define JIFFY_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,7 +18,7 @@ extern "C" {
  * systems, but you'll need to recompile Jiffy.
  *
  */
-#define JSON_MAX_STACK_DEPTH  1024
+#define JF_MAX_STACK_DEPTH  1024
 
 /* 
  * Maximum buffer length: the longest literal number string allowed.
@@ -28,117 +28,117 @@ extern "C" {
  * longest literal number string.
  *
  */
-#define JSON_MAX_BUF_LEN      128
+#define JF_MAX_BUF_LEN      128
 
-typedef struct json_parser_t_ json_parser_t;
+typedef struct jf_parser_t_ jf_parser_t;
 
 /* 
- * json_err_t - Full list of error codes returned by Jiffy.
+ * jf_err_t - Full list of error codes returned by Jiffy.
  */
 typedef enum {
   /* success */
-  JSON_OK, /* success (no error) */
+  JF_OK, /* success (no error) */
 
   /* error code errors */
-  JSON_ERR_INVALID_ERROR_CODE, /* invalid error code */
-  JSON_ERR_INVALID_ERROR_BUFFER, /* buffer too small for error string */
+  JF_ERR_INVALID_ERROR_CODE, /* invalid error code */
+  JF_ERR_INVALID_ERROR_BUFFER, /* buffer too small for error string */
 
   /* stack errors */
-  JSON_ERR_STACK_UNDERFLOW, /* stack underflow */
-  JSON_ERR_STACK_OVERFLOW, /* stack overflow */
+  JF_ERR_STACK_UNDERFLOW, /* stack underflow */
+  JF_ERR_STACK_OVERFLOW, /* stack overflow */
 
   /* invalid state errors */
-  JSON_ERR_INVALID_STATE, /* invalid state (memory corruption?) */
-  JSON_ERR_INVALID_FINAL_STATE_WRONG_VALUE, /* wrong value (truncated string?) */
-  JSON_ERR_INVALID_FINAL_STATE_STACK_TOO_BIG, /* stack too big (truncated string?) */
-  JSON_ERR_INVALID_FINAL_STATE_STACK_TOO_SMALL, /* stack too small (truncated string?) */
+  JF_ERR_INVALID_STATE, /* invalid state (memory corruption?) */
+  JF_ERR_INVALID_FINAL_STATE_WRONG_VALUE, /* wrong value (truncated string?) */
+  JF_ERR_INVALID_FINAL_STATE_STACK_TOO_BIG, /* stack too big (truncated string?) */
+  JF_ERR_INVALID_FINAL_STATE_STACK_TOO_SMALL, /* stack too small (truncated string?) */
 
   /* invalid token errors */
-  JSON_ERR_INVALID_TOKEN, /* invalid token */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_PAREN_SPACE, /* expected '(' or ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CL_PAREN_SPACE, /* expected ')' or ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_PAREN_EXPR, /* expected '(' or value */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_SPACE, /* expected ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_DOT, /* expected digit, 'e', or '.' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_END_NUM, /* expected digit, 'e', or end of number */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_PLUS_MINUS, /* expected digit, '+', or '-' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_END_NUM, /* expected digit or end of number */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_U, /* expected 'u' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_L, /* expected 'l' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_R, /* expected 'r' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_E, /* expected 'e' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_A, /* expected 'a' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_S, /* expected 's' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_EXPR, /* expected ']' or value */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_COMMA_SPACE, /* expected ']', ',', or ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_QUOTE_SPACE, /* expected '}', double quote, or ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_COLON_SPACE, /* expected ':' or ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_EXPR, /* expected value */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_COMMA_SPACE, /* expected '}', ',', or ' ' */
-  JSON_ERR_INVALID_TOKEN_EXPECTED_HEX, /* expected hexadecimal value (0-9 or a-f) */
-  JSON_ERR_INVALID_TOKEN_EMBEDDED_CTRL_CHAR, /* embedded control character (e.g. unescaped newline, tab, etc) */
-  JSON_ERR_INVALID_TOKEN_BAD_UTF8_BYTE, /* invalid UTF-8 byte */
-  JSON_ERR_INVALID_TOKEN_BAD_ESCAPE_CHAR,  /* invalid backslash escape  */
+  JF_ERR_INVALID_TOKEN, /* invalid token */
+  JF_ERR_INVALID_TOKEN_EXPECTED_PAREN_SPACE_EXPR, /* expected '(', ' ', or value */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CL_PAREN_SPACE, /* expected ')' or ' ' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_PAREN_EXPR, /* expected '(' or value */
+  JF_ERR_INVALID_TOKEN_EXPECTED_SPACE, /* expected ' ' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_DOT, /* expected digit, 'e', or '.' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_END_NUM, /* expected digit, 'e', or end of number */
+  JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_PLUS_MINUS, /* expected digit, '+', or '-' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_END_NUM, /* expected digit or end of number */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_U, /* expected 'u' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_L, /* expected 'l' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_R, /* expected 'r' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_E, /* expected 'e' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_A, /* expected 'a' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_S, /* expected 's' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_EXPR, /* expected ']' or value */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_COMMA_SPACE, /* expected ']', ',', or ' ' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_QUOTE_SPACE, /* expected '}', double quote, or ' ' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_COLON_SPACE, /* expected ':' or ' ' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_EXPR, /* expected value */
+  JF_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_COMMA_SPACE, /* expected '}', ',', or ' ' */
+  JF_ERR_INVALID_TOKEN_EXPECTED_HEX, /* expected hexadecimal value (0-9 or a-f) */
+  JF_ERR_INVALID_TOKEN_EMBEDDED_CTRL_CHAR, /* embedded control character (e.g. unescaped newline, tab, etc) */
+  JF_ERR_INVALID_TOKEN_BAD_UTF8_BYTE, /* invalid UTF-8 byte */
+  JF_ERR_INVALID_TOKEN_BAD_ESCAPE_CHAR,  /* invalid backslash escape  */
 
   /* misc errors */
-  JSON_ERR_NUMBER_TOO_BIG, /* number string too long for buffer */
-  JSON_STOP, /* callback returned error */
+  JF_ERR_NUMBER_TOO_BIG, /* number string too long for buffer */
+  JF_STOP, /* callback returned error */
 
   /* last error */
-  JSON_ERR_LAST
-} json_err_t;
+  JF_ERR_LAST
+} jf_err_t;
 
 /* 
- * json_type_t - Full list token types emitted by Jiffy.
+ * jf_type_t - Full list token types emitted by Jiffy.
  */
 typedef enum {
   /* object tokens */
-  JSON_TYPE_BGN_OBJECT,
-  JSON_TYPE_END_OBJECT,
+  JF_TYPE_BGN_OBJECT,
+  JF_TYPE_END_OBJECT,
 
   /* array tokens */
-  JSON_TYPE_BGN_ARRAY,
-  JSON_TYPE_END_ARRAY,
+  JF_TYPE_BGN_ARRAY,
+  JF_TYPE_END_ARRAY,
 
   /* string tokens */
-  JSON_TYPE_BGN_STRING,
-  JSON_TYPE_STRING_FRAGMENT,
-  JSON_TYPE_END_STRING,
+  JF_TYPE_BGN_STRING,
+  JF_TYPE_STRING_FRAGMENT,
+  JF_TYPE_END_STRING,
 
   /* number tokens */
-  JSON_TYPE_INTEGER,
-  JSON_TYPE_FLOAT,
+  JF_TYPE_INTEGER,
+  JF_TYPE_FLOAT,
 
   /* literal tokens */
-  JSON_TYPE_TRUE,
-  JSON_TYPE_FALSE,
-  JSON_TYPE_NULL,
+  JF_TYPE_TRUE,
+  JF_TYPE_FALSE,
+  JF_TYPE_NULL,
 
-  JSON_TYPE_LAST
-} json_type_t;
+  JF_TYPE_LAST
+} jf_type_t;
 
 /* 
  * Ignore RFC3629 constraints on valid UTF-8 values.  Enable this flag
  * if you've got a JSON stream with invalid UTF-8 values.
  */
-#define JSON_FLAG_IGNORE_RFC3629 (1 << 0)
+#define JF_FLAG_IGNORE_RFC3629 (1 << 0)
 
 /* 
- * json_parser_cb_t - Parser callback prototype.
+ * jf_parser_cb_t - Parser callback prototype.
  */
-typedef json_err_t (*json_parser_cb_t)(json_parser_t *, json_type_t, const uint8_t  *, const size_t);
+typedef jf_err_t (*jf_parser_cb_t)(jf_parser_t *, jf_type_t, const uint8_t  *, const size_t);
 
 /* 
- * json_parser_t - Main parser context.
+ * jf_parser_t - Main parser context.
  */
-struct json_parser_t_ {
+struct jf_parser_t_ {
   /* user data (public, editable at any point) */
   void *user_data;
 
-  /* parser callback (public, editable before first call to json_parse() */
-  json_parser_cb_t cb;
+  /* parser callback (public, editable before first call to jf_parse() */
+  jf_parser_cb_t cb;
 
-  /* parser flags (public, editable before first call to json_parse()) */
+  /* parser flags (public, editable before first call to jf_parse()) */
   uint32_t flags;
 
   /* number of bytes parsed (public, read-only) */
@@ -149,52 +149,52 @@ struct json_parser_t_ {
   /************************/
 
   /* state stack (private) */
-  char stack[JSON_MAX_STACK_DEPTH];
+  char stack[JF_MAX_STACK_DEPTH];
   size_t sp;
 
   /* string/number buffer (private) */
-  uint8_t buf[JSON_MAX_BUF_LEN];
+  uint8_t buf[JF_MAX_BUF_LEN];
   size_t buf_len;
 };
 
 /* 
- * json_version() - Get the version of Jiffy.
+ * jf_version() - Get the version of Jiffy.
  *
  * Note: Returns an internal string that should not be modified or
  * freed.
  *
  */
-const char *json_version(void);
+const char *jf_version(void);
 
 /* 
- * json_strerror_r() - Populate buffer with description of error code.
+ * jf_strerror_r() - Populate buffer with description of error code.
  *
- * Returns JSON_OK if the error code was valid and the buffer was large 
+ * Returns JF_OK if the error code was valid and the buffer was large 
  * enough to hold the error message.
  *
  */
-json_err_t json_strerror_r(json_err_t err, char *buf, size_t buf_len);
+jf_err_t jf_strerror_r(jf_err_t err, char *buf, size_t buf_len);
 
 /* 
- * json_parser_init() - Initialize parser context.
+ * jf_parser_init() - Initialize parser context.
  *
  */
-void json_parser_init(json_parser_t *, json_parser_cb_t);
+void jf_parser_init(jf_parser_t *, jf_parser_cb_t);
 
 /* 
- * json_parser_reset() - Reset given parser context.
+ * jf_parser_reset() - Reset given parser context.
  *
  */
-void json_parser_reset(json_parser_t *);
+void jf_parser_reset(jf_parser_t *);
 
 /*
- * json_parse() - Parse given JSON data with parser.
+ * jf_parse() - Parse given JSON data with parser.
  */
-json_err_t json_parse(json_parser_t *, const uint8_t *, const size_t, const int);
+jf_err_t jf_parse(jf_parser_t *, const uint8_t *, const size_t, const int);
 
 
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */
 
-#endif /* JSON_H */
+#endif /* JIFFY_H */

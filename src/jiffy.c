@@ -1,10 +1,9 @@
 #include <string.h> /* for memset() */
-
-#include "json.h"
+#include "jiffy.h"
 
 /*
  * static list of error strings 
- * (automagically generated from json.h; see the json_err_t enum)
+ * (automagically generated from json.h; see the jf_err_t enum)
  */
 static const char *
 errors[] = {
@@ -27,7 +26,7 @@ errors[] = {
 
   /* invalid token errors */
   "invalid token",
-  "expected '(' or ' '",
+  "expected '(', ' ', or value",
   "expected ')' or ' '",
   "expected '(' or value",
   "expected ' '",
@@ -64,49 +63,49 @@ static const char *
 version = "0.1.0";
 
 const char *
-json_version(void) {
+jf_version(void) {
   return version;
 }
 
-json_err_t
-json_strerror_r(json_err_t err, char *buf, size_t buf_len) {
+jf_err_t
+jf_strerror_r(jf_err_t err, char *buf, size_t buf_len) {
   size_t len;
 
   /* check error code */
-  if (err >= JSON_ERR_LAST)
-    return JSON_ERR_INVALID_ERROR_CODE;
+  if (err >= JF_ERR_LAST)
+    return JF_ERR_INVALID_ERROR_CODE;
 
   /* get length of error string */
   len = strlen(errors[err]) + 1;
   
   /* check buffer length */
   if (buf_len < len)
-    return JSON_ERR_INVALID_ERROR_BUFFER;
+    return JF_ERR_INVALID_ERROR_BUFFER;
 
   /* copy error string to output buffer */
   memcpy(buf, errors[err], len);
 
   /* return success */
-  return JSON_OK;
+  return JF_OK;
 }
 
 void
-json_parser_init(json_parser_t *p, json_parser_cb_t cb) {
-  memset(p, 0, sizeof(json_parser_t));
+jf_parser_init(jf_parser_t *p, jf_parser_cb_t cb) {
+  memset(p, 0, sizeof(jf_parser_t));
   p->cb = cb;
 }
 
 void
-json_parser_reset(json_parser_t *p) {
-  json_parser_init(p, p->cb);
+jf_parser_reset(jf_parser_t *p) {
+  jf_parser_init(p, p->cb);
 }
 
 #define MASK(bits, shift) (((1 << (bits)) - 1) << (shift))
 #define FROM_HEX(c) MASK(4, 0) & (((c) >= '0' && (c) <= '9') ? ((c) - '0') : (((c) - 'a') + 10))
 
 /* FIXME: i don't think this is working right */
-static json_err_t
-decode_utf8(json_parser_t *p) {
+static jf_err_t
+decode_utf8(jf_parser_t *p) {
   uint8_t *u = p->buf + p->buf_len - 4;
   uint32_t v;
 
@@ -168,13 +167,13 @@ decode_utf8(json_parser_t *p) {
   }
 
 
-  return JSON_OK;
+  return JF_OK;
 }
 
 #define PUSH_STATE(ps, state) do {                  \
   /* check for stack overflow */                    \
-  if ((ps)->sp + 1 >= JSON_MAX_STACK_DEPTH)         \
-    return JSON_ERR_STACK_OVERFLOW;                 \
+  if ((ps)->sp + 1 >= JF_MAX_STACK_DEPTH)           \
+    return JF_ERR_STACK_OVERFLOW;                   \
                                                     \
   /* push state */                                  \
   (ps)->stack[(ps)->sp] = (state);                  \
@@ -186,7 +185,7 @@ decode_utf8(json_parser_t *p) {
 #define POP_STATE(ps) do {                          \
   /* check for stack underflow */                   \
   if (!(ps)->sp)                                    \
-    return JSON_ERR_STACK_UNDERFLOW;                \
+    return JF_ERR_STACK_UNDERFLOW;                  \
                                                     \
   /* decriment stack pointer */                     \
   (ps)->sp--;                                       \
@@ -196,7 +195,7 @@ decode_utf8(json_parser_t *p) {
   if ((ps)->cb) {                                   \
     err = (ps)->cb((ps), (type), (str), (str_len)); \
                                                     \
-    if (err != JSON_OK)                             \
+    if (err != JF_OK)                               \
       return err;                                   \
   }                                                 \
 } while (0)
@@ -206,7 +205,7 @@ decode_utf8(json_parser_t *p) {
 #define SEND_STRING_FRAGMENT(ps) do {               \
   if ((ps)->buf_len > 0) {                          \
     SEND_FULL(                                      \
-      (ps), JSON_TYPE_STRING_FRAGMENT,              \
+      (ps), JF_TYPE_STRING_FRAGMENT,                \
       (ps)->buf, (ps)->buf_len                      \
     );                                              \
                                                     \
@@ -215,14 +214,14 @@ decode_utf8(json_parser_t *p) {
 } while (0)
 
 #define PUSH_CHAR(ps, c) do {                       \
-  if ((ps)->buf_len + 1 >= JSON_MAX_BUF_LEN)        \
+  if ((ps)->buf_len + 1 >= JF_MAX_BUF_LEN)          \
     SEND_STRING_FRAGMENT(ps);                       \
   (ps)->buf[(ps)->buf_len++] = (c);                 \
 } while (0)
 
 #define PUSH_NUM(ps, c) do {                        \
-  if ((ps)->buf_len + 1 >= JSON_MAX_BUF_LEN)        \
-    return JSON_ERR_NUMBER_TOO_BIG;                 \
+  if ((ps)->buf_len + 1 >= JF_MAX_BUF_LEN)          \
+    return JF_ERR_NUMBER_TOO_BIG;                   \
   (ps)->buf[(ps)->buf_len++] = (c);                 \
 } while (0)
 
@@ -272,7 +271,7 @@ decode_utf8(json_parser_t *p) {
       PUSH_STATE((ps), (d));                        \
                                                     \
     PUSH_STATE((ps), 'o');                          \
-    SEND((ps), JSON_TYPE_BGN_OBJECT);               \
+    SEND((ps), JF_TYPE_BGN_OBJECT);                 \
                                                     \
     break;                                          \
   case '[':                                         \
@@ -280,7 +279,7 @@ decode_utf8(json_parser_t *p) {
       PUSH_STATE((ps), (d));                        \
                                                     \
     PUSH_STATE((ps), 'a');                          \
-    SEND((ps), JSON_TYPE_BGN_ARRAY);                \
+    SEND((ps), JF_TYPE_BGN_ARRAY);                  \
                                                     \
     break;                                          \
   case '"':                                         \
@@ -288,7 +287,7 @@ decode_utf8(json_parser_t *p) {
       PUSH_STATE((ps), (d));                        \
                                                     \
     PUSH_STATE((ps), 's');                          \
-    SEND((ps), JSON_TYPE_BGN_STRING);               \
+    SEND((ps), JF_TYPE_BGN_STRING);                 \
                                                     \
     break;                                          \
   case 't':                                         \
@@ -324,21 +323,21 @@ decode_utf8(json_parser_t *p) {
     break;
 
 #define CHECK_UTF8_BYTE(ps, ch) do {                \
-  if (((ch) > 0x7f) && !((ps)->flags & JSON_FLAG_IGNORE_RFC3629)) {  \
+  if (((ch) > 0x7f) && !((ps)->flags & JF_FLAG_IGNORE_RFC3629)) {  \
     if (((ch) >= 0xc0 && (ch) <= 0xc1) ||           \
         ((ch) >= 0xf5 && (ch) <= 0xf7) ||           \
         ((ch) >= 0xf8 && (ch) <= 0xfb) ||           \
         ((ch) >= 0xfc && (ch) <= 0xfd) ||           \
         ((ch) >= 0xfe /* && (ch) <= 0xff */))       \
-      return JSON_ERR_INVALID_TOKEN_BAD_UTF8_BYTE;  \
+      return JF_ERR_INVALID_TOKEN_BAD_UTF8_BYTE;    \
   }                                                 \
 } while (0)
   
 
-json_err_t
-json_parse(json_parser_t *p, const uint8_t *buf, const size_t buf_len, const int is_final) {
+jf_err_t
+jf_parse(jf_parser_t *p, const uint8_t *buf, const size_t buf_len, const int is_final) {
   size_t i, base;
-  json_err_t err;
+  jf_err_t err;
 
   /* save initial byte count */
   base = p->num_bytes;
@@ -360,7 +359,7 @@ retry:
 
         break;
       default:
-        return JSON_ERR_INVALID_TOKEN_EXPECTED_PAREN_SPACE;
+        return JF_ERR_INVALID_TOKEN_EXPECTED_PAREN_SPACE_EXPR;
       }
     } else {
       switch (p->stack[p->sp - 1]) {
@@ -377,7 +376,7 @@ retry:
           PUSH_STATE(p, ' ');
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_PAREN_EXPR;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_PAREN_EXPR;
         }
 
         break;
@@ -397,7 +396,7 @@ retry:
           PUSH_STATE(p, ' ');
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CL_PAREN_SPACE;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CL_PAREN_SPACE;
         }
 
         break;
@@ -408,7 +407,7 @@ retry:
           /* ignore whitespace */
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_SPACE;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_SPACE;
         }
 
         break;
@@ -437,7 +436,7 @@ retry:
           break;
         CASE_END_NUM
           /* send number */
-          SEND_FULL(p, JSON_TYPE_INTEGER, p->buf, p->buf_len);
+          SEND_FULL(p, JF_TYPE_INTEGER, p->buf, p->buf_len);
           p->buf_len = 0;
 
           /* pop state and retry token */
@@ -446,7 +445,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_DOT;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_DOT;
         }
 
         break;
@@ -464,7 +463,7 @@ retry:
           break;
         CASE_END_NUM
           /* send number */
-          SEND_FULL(p, JSON_TYPE_FLOAT, p->buf, p->buf_len);
+          SEND_FULL(p, JF_TYPE_FLOAT, p->buf, p->buf_len);
           p->buf_len = 0;
 
           /* pop state and retry token */
@@ -473,7 +472,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_END_NUM;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_E_END_NUM;
         }
 
         break;
@@ -487,7 +486,7 @@ retry:
           PUSH_NUM(p, buf[i]);
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_PLUS_MINUS;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_PLUS_MINUS;
         }
 
         break;
@@ -498,7 +497,7 @@ retry:
           break;
         CASE_END_NUM
           /* send number */
-          SEND_FULL(p, JSON_TYPE_FLOAT, p->buf, p->buf_len);
+          SEND_FULL(p, JF_TYPE_FLOAT, p->buf, p->buf_len);
           p->buf_len = 0;
 
           /* pop state and retry token */
@@ -507,7 +506,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_DIGIT_END_NUM;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_DIGIT_END_NUM;
         }
 
         break;
@@ -519,7 +518,7 @@ retry:
         if (buf[i] == 'u') {
           PUSH_STATE(p, 'U');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_U;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_U;
         }
 
         break;
@@ -527,19 +526,19 @@ retry:
         if (buf[i] == 'l') {
           PUSH_STATE(p, 'L');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_L;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_L;
         }
 
         break;
       case 'L':
         if (buf[i] == 'l') {
-          SEND(p, JSON_TYPE_NULL);
+          SEND(p, JF_TYPE_NULL);
 
           POP_STATE(p);
           POP_STATE(p);
           POP_STATE(p);
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_L;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_L;
         }
 
         break;
@@ -552,7 +551,7 @@ retry:
         if (buf[i] == 'r') {
           PUSH_STATE(p, 'R');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_R;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_R;
         }
 
         break;
@@ -560,19 +559,19 @@ retry:
         if (buf[i] == 'u') {
           PUSH_STATE(p, 'W');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_U;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_U;
         }
 
         break;
       case 'W':
         if (buf[i] == 'e') {
-          SEND(p, JSON_TYPE_TRUE);
+          SEND(p, JF_TYPE_TRUE);
 
           POP_STATE(p);
           POP_STATE(p);
           POP_STATE(p);
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_E;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_E;
         }
 
         break;
@@ -585,7 +584,7 @@ retry:
         if (buf[i] == 'a') {
           PUSH_STATE(p, 'A');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_A;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_A;
         }
 
         break;
@@ -593,7 +592,7 @@ retry:
         if (buf[i] == 'l') {
           PUSH_STATE(p, 'M');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_L;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_L;
         }
 
         break;
@@ -601,20 +600,20 @@ retry:
         if (buf[i] == 's') {
           PUSH_STATE(p, 'S');
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_S;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_S;
         }
 
         break;
       case 'S':
         if (buf[i] == 'e') {
-          SEND(p, JSON_TYPE_FALSE);
+          SEND(p, JF_TYPE_FALSE);
 
           POP_STATE(p);
           POP_STATE(p);
           POP_STATE(p);
           POP_STATE(p);
         } else {
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CHAR_E;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CHAR_E;
         }
 
         break;
@@ -627,13 +626,13 @@ retry:
         switch (buf[i]) {
         ACCEPT_EXPR(p, buf, ',')
         case ']':
-          SEND(p, JSON_TYPE_END_ARRAY);
+          SEND(p, JF_TYPE_END_ARRAY);
           
           POP_STATE(p);
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_EXPR;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_EXPR;
         }
 
         break;
@@ -650,7 +649,7 @@ retry:
           goto retry;
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_COMMA_SPACE;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CL_BRACKET_COMMA_SPACE;
         }
 
         break;
@@ -668,17 +667,17 @@ retry:
           PUSH_STATE(p, ':');
           PUSH_STATE(p, 's');
 
-          SEND(p, JSON_TYPE_BGN_STRING);
+          SEND(p, JF_TYPE_BGN_STRING);
 
           break;
         case '}':
           POP_STATE(p);
 
-          SEND(p, JSON_TYPE_END_OBJECT);
+          SEND(p, JF_TYPE_END_OBJECT);
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_QUOTE_SPACE;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_QUOTE_SPACE;
         }
 
         break;
@@ -691,7 +690,7 @@ retry:
           PUSH_STATE(p, 'v');
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_COLON_SPACE;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_COLON_SPACE;
         }
 
         break;
@@ -699,7 +698,7 @@ retry:
         switch (buf[i]) {
         ACCEPT_EXPR(p, buf, 'c')
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_EXPR;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_EXPR;
         }
 
         break;
@@ -722,7 +721,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_COMMA_SPACE;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_CL_SQ_BRACKET_COMMA_SPACE;
         }
 
         break;
@@ -739,7 +738,7 @@ retry:
           switch (buf[i]) {
           case '"':
             SEND_STRING_FRAGMENT(p);
-            SEND(p, JSON_TYPE_END_STRING);
+            SEND(p, JF_TYPE_END_STRING);
             POP_STATE(p);
             break;
           case '\\':
@@ -749,7 +748,7 @@ retry:
             PUSH_CHAR(p, buf[i]);
           }
         } else {
-          return JSON_ERR_INVALID_TOKEN_EMBEDDED_CTRL_CHAR;
+          return JF_ERR_INVALID_TOKEN_EMBEDDED_CTRL_CHAR;
         }
 
         break;
@@ -787,7 +786,7 @@ retry:
           PUSH_STATE(p, 'u');
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_BAD_ESCAPE_CHAR;
+          return JF_ERR_INVALID_TOKEN_BAD_ESCAPE_CHAR;
         }
 
         break;
@@ -804,7 +803,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_HEX;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_HEX;
         };
 
         break;
@@ -817,7 +816,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_HEX;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_HEX;
         };
 
         break;
@@ -830,7 +829,7 @@ retry:
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_HEX;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_HEX;
         };
 
         break;
@@ -840,20 +839,20 @@ retry:
           PUSH_CHAR(p, buf[i]);
           
           /* decode unicode hex sequence */
-          if ((err = decode_utf8(p)) != JSON_OK)
+          if ((err = decode_utf8(p)) != JF_OK)
             return err;
 
           POP_STATE(p);
 
           break;
         default:
-          return JSON_ERR_INVALID_TOKEN_EXPECTED_HEX;
+          return JF_ERR_INVALID_TOKEN_EXPECTED_HEX;
         };
 
         break;
       default:
         /* unknown state? probably memory corruption */
-        return JSON_ERR_INVALID_STATE;
+        return JF_ERR_INVALID_STATE;
       }
     }
   }
@@ -866,14 +865,14 @@ retry:
     if (p->sp == 1) {
       /* check for final state */
       if (p->stack[0] != ' ')
-        return JSON_ERR_INVALID_FINAL_STATE_WRONG_VALUE;
+        return JF_ERR_INVALID_FINAL_STATE_WRONG_VALUE;
     } else if (p->sp > 1) {
-      return JSON_ERR_INVALID_FINAL_STATE_STACK_TOO_BIG;
+      return JF_ERR_INVALID_FINAL_STATE_STACK_TOO_BIG;
     } else {
-      return JSON_ERR_INVALID_FINAL_STATE_STACK_TOO_SMALL;
+      return JF_ERR_INVALID_FINAL_STATE_STACK_TOO_SMALL;
     }
   }
   
   /* return success */
-  return JSON_OK;
+  return JF_OK;
 }
