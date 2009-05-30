@@ -129,6 +129,11 @@ jf_reset(jf_t *p) {
 }
 #endif /* 0 */
 
+jf_err_t
+jf_done(jf_t *p) {
+  return jf_parse(p, 0, 0); 
+}
+
 #define MASK(bits, shift) (((1 << (bits)) - 1) << (shift))
 #define FROM_HEX(c) MASK(4, 0) & (((c) >= '0' && (c) <= '9') ? ((c) - '0') : (((c) - 'a') + 10))
 
