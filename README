@@ -75,12 +75,12 @@ found in a JSON stream:
       return JF_OK;
     }
 
-A Jiffy parser callback returns either JF_OK to indicate success, or
-JF_STOP to indicate an error.  Jiffy passes JF_STOP errors back as the
-result from jf_parse(), so you can use JF_STOP in conjunction with the
-`user_data` parameter to perform your own error handling.
+A Jiffy parser callback returns either `JF_OK` to indicate success, or
+`JF_STOP` to indicate an error.  Jiffy passes `JF_STOP` errors back as
+the result from `jf_parse()`, so you can use `JF_STOP` in conjunction
+with the `user_data` parameter to perform your own error handling.
 
-Here's a basic main() function that goes with the parser callback
+Here's a basic `main()` function that goes with the parser callback
 function above:
 
     int main(int argc, char *argv[]) {
@@ -165,7 +165,7 @@ function:
        * (calling jf_parse() with a NULL buffer and zero length is
        * equivalent to calling jf_done())
        */
-      parse(&parser, 0, 0);
+      parse_and_check(&parser, 0, 0);
 
       /* return success */
       return EXIT_SUCCESS;
