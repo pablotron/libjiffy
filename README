@@ -20,11 +20,11 @@ A Jiffy parser uses about 1 kilobyte of memory and never allocates any
 additional memory, which makes it ideal for embedded systems or any
 other memory-constrained environment.
 
-Jiffy also includes a binding for the programming language Ruby
+Jiffy also includes a binding for the Ruby programming language
 (http://ruby-lang.org/).  See the "Using Jiffy" section below and the
 file `ext/ruby/README` for additional information.
 
-The Ruby bindings also include a traditional DOM-style JSON encoder and
+The Ruby binding also includes a traditional DOM-style JSON encoder and
 parser, but the ANSI C version does not.  Fortunately, implementing one
 on top of a stream parser is fairly straightforward; see the methods
 `Jiffy.encode` and `Jiffy.decode` in `ext/ruby/lib/jiffy.rb` for an
