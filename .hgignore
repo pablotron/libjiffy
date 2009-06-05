@@ -3,3 +3,5 @@ syntax: glob
 .*.sw?
 *.a
 *.so
+test/cli_test
+test/parse_int_array
