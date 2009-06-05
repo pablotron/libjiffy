@@ -75,8 +75,13 @@ found in a JSON stream:
       return JF_OK;
     }
 
-Here's the basic main() file that goes with the parser callback function
-above:
+A Jiffy parser callback returns either JF_OK to indicate success, or
+JF_STOP to indicate an error.  Jiffy passes JF_STOP errors back as the
+result from jf_parse(), so you can use JF_STOP in conjunction with the
+`user_data` parameter to perform your own error handling.
+
+Here's a basic main() function that goes with the parser callback
+function above:
 
     int main(int argc, char *argv[]) {
       char buf[BUFSIZ], err_buf[1024];
@@ -222,7 +227,7 @@ You can also pass data to the parser callback functions using the
     }
 
 Note that the `user_data` parameter is ignored by Jiffy; you can change
-it at any time (including during the parsing callback) and you are
+it at any time (including during a parsing callback) and you are
 responsible for freeing any resources associated with it.
 
 Jiffy also includes a simple binding for the Ruby programming language
@@ -248,7 +253,45 @@ Jiffy also includes a simple binding for the Ruby programming language
       end
     rescue Jiffy::Error => err
       # catch any parsing errors
-      $stderr.puts "ERROR: #{err}"
+      warn "ERROR: #{err}"
+    end
+
+You can also pass data in piecemeal, just like the C interface:
+
+    # load library
+    require 'jiffy'
+
+    # top-level block to catch any parsing errors
+    begin
+      # open input file named 'test_file.json', then
+      # read it in as 1k-size chunks of data
+      File.open('test_file.json') do |fh|
+        #
+        # create new stream parser
+        # 
+        # note: you can pass Jiffy::Parser.new a block, and the parser
+        # will be automatically finalized when the block exits
+        #
+        Jiffy::Parser.new do |parser|
+          # read in file as 1k-sized chunks
+          while data = fh.read(1024)
+            # parse chunk
+            parser.parse(data) do |type, val|
+              # determine the type of data
+              case type
+              when Jiffy::TYPE_INTEGER
+                # print integers on the screen
+                puts "got integer: #{val}"
+              else
+                # ignore other types of data
+              end
+            end
+          end
+        end
+      end
+    rescue Jiffy::Error => err
+      # catch any parsing errors
+      warn "ERROR: #{err}"
     end
 
 The Ruby binding also includes a traditional DOM-style JSON encoder and
